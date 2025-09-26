@@ -1,6 +1,35 @@
-# 🌟 Interactive Floating Orb - TamperMonkey Userscript
+# 🌟 Floating Orb - TamperMonkey Userscript
 
 A beautiful, interactive floating orb for webpage manipulation inspired by the Mozilla Orbit Orb concept. This script provides a fast, elegant way to have multiple action items available on any webpage through a draggable, customizable interface.
+
+## ⚠️ **Important Warning**
+
+**By default, this userscript runs on EVERY webpage you visit** (`@match *://*/*`). This can have performance implications and security considerations. 
+
+### 🚨 **You should modify the `@match` directive to limit it to specific sites:**
+
+```javascript
+// Instead of: @match *://*/*
+// Use specific sites:
+@match https://github.com/*
+@match https://*.google.com/*
+@match https://stackoverflow.com/*
+```
+
+### **Cons of Running on Every Page:**
+- **Performance Impact**: Adds overhead to every page load
+- **Memory Usage**: Consumes additional browser memory on all tabs
+- **Potential Conflicts**: May interfere with site-specific functionality
+- **Security Risk**: Executes code on sensitive pages (banking, etc.)
+- **Visual Distraction**: Orb appears on pages where you don't need it
+
+### **User Caution Advised:**
+- **Review the code** before installation to understand what it does
+- **Test on non-critical sites** first
+- **Limit to specific domains** you actually want to modify
+- **Be aware of auto-start functions** that execute automatically
+- **Monitor interval functions** to prevent excessive resource usage
+- **Consider privacy implications** when running on all websites
 
 ## ⚠️ **Important Warning**
 
@@ -35,6 +64,7 @@ A beautiful, interactive floating orb for webpage manipulation inspired by the M
 
 While TamperMonkey is already a powerful framework in itself, within broader frameworks, opinionated task-oriented micro-frameworks naturally emerge. This script serves as a micro-framework for webpage interaction - providing a unified, visual interface for common web automation tasks and custom functions.
 
+Think of it as your personal webpage companion that travels with you across the internet, ready to execute any action you need with a simple click or right-click.
 
 ## ✨ Features
 
@@ -85,14 +115,84 @@ While TamperMonkey is already a powerful framework in itself, within broader fra
 // Right-click: Open context menu
 ```
 
-### Setting Custom Functions
+### Setting Custom Functions to execute on click
+These functions are **executed when you click on the orb** (quick click, not drag). You can set them from the browser's developer console or from within other scripts:
+
 ```javascript
-// In browser console:
-setOrbFunction(() => alert('Hello World!'));
-setOrbFunction(() => window.open('https://google.com', '_blank'));
-setOrbFunction(() => {
+// In browser console or other scripts:
+setOrbClickFunction(() => alert('Hello World!'));
+setOrbClickFunction(() => window.open('https://google.com', '_blank'));
+setOrbClickFunction(() => {
     document.body.style.backgroundColor = 'lightblue';
 });
+
+// The function you set will execute every time you click the orb
+```
+
+### Setting Auto-Start Functions
+
+You can customize the 6 auto-start functions that run when the orb is created. These functions can be set from anywhere in the userscript or from the browser console:
+
+#### Serial Functions (run sequentially with 1ms delays)
+```javascript
+// Set individual serial functions
+setOrbSerial1(() => {
+    console.log("Custom serial function 1 - runs first");
+    if (window.location.hostname.includes('github.com')) {
+        console.log("GitHub detected!");
+    }
+});
+
+setOrbSerial2(() => {
+    console.log("Custom serial function 2 - runs second (1ms later)");
+    // Inject custom CSS
+    const style = document.createElement('style');
+    style.textContent = '.highlight { background: yellow !important; }';
+    document.head.appendChild(style);
+});
+
+setOrbSerial3(() => {
+    console.log("Custom serial function 3 - runs third (2ms later)");
+    window.pageLoadTime = Date.now();
+});
+
+// Or set all at once
+setAllOrbSerialFunctions(func1, func2, func3);
+```
+
+#### Parallel Functions (run simultaneously)
+```javascript
+// Set individual parallel functions
+setOrbParallel1(() => {
+    console.log("Custom parallel function 1 - runs immediately");
+    // Set up keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'h') {
+            console.log('Custom hotkey pressed!');
+        }
+    });
+});
+
+setOrbParallel2(() => {
+    console.log("Custom parallel function 2 - runs immediately");
+    // Page monitoring
+    const observer = new MutationObserver((mutations) => {
+        console.log('Page changes detected:', mutations.length);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+});
+
+setOrbParallel3(() => {
+    console.log("Custom parallel function 3 - runs immediately");
+    // Custom data collection
+    window.pageStats = {
+        loadTime: Date.now(),
+        links: document.querySelectorAll('a').length
+    };
+});
+
+// Or set all at once
+setAllOrbParallelFunctions(func1, func2, func3);
 ```
 
 ### Built-in Menu Functions
@@ -159,6 +259,16 @@ auto_start_serial_3() {
 }
 ```
 
+**Or use the global functions to set them:**
+```javascript
+setOrbSerial1(() => console.log('Custom serial 1'));
+setOrbSerial2(() => console.log('Custom serial 2'));
+setOrbSerial3(() => console.log('Custom serial 3'));
+
+// Set all at once
+setAllOrbSerialFunctions(func1, func2, func3);
+```
+
 ### Parallel Functions (simultaneous execution)
 ```javascript
 auto_start_parallel_1() {
@@ -191,6 +301,8 @@ auto_start_parallel_3() {
 ```
 
 ## ⏰ Interval Management System
+
+The interval system allows you to **set any function to execute automatically at specified time intervals** (e.g., every 5 seconds, every minute, etc.). These are background actions that run continuously without user interaction, perfect for automation, monitoring, and periodic tasks.
 
 ### Basic Interval Usage
 ```javascript
@@ -238,7 +350,135 @@ clearAllOrbIntervals();
 
 ## 🛠️ Advanced Examples
 
-### Page Automation
+### Auto-Start Function Customization
+```javascript
+// Serial functions - run in sequence with 1ms delays
+setOrbSerial1(() => {
+    // Site-specific initialization
+    if (window.location.hostname.includes('github.com')) {
+        console.log('GitHub detected - loading GitHub-specific features');
+        // Add GitHub-specific functionality
+    } else if (window.location.hostname.includes('stackoverflow.com')) {
+        console.log('Stack Overflow detected');
+        // Add SO-specific functionality
+    }
+});
+
+setOrbSerial2(() => {
+    // Global CSS injection
+    const customCSS = `
+        .orb-highlight { background: rgba(255, 255, 0, 0.3) !important; }
+        .orb-hide { opacity: 0.1 !important; }
+    `;
+    const style = document.createElement('style');
+    style.textContent = customCSS;
+    document.head.appendChild(style);
+});
+
+setOrbSerial3(() => {
+    // Data collection setup
+    window.orbPageData = {
+        loadTime: Date.now(),
+        url: window.location.href,
+        initialElementCount: document.querySelectorAll('*').length
+    };
+});
+
+// Parallel functions - run simultaneously
+setOrbParallel1(() => {
+    // Global keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.altKey && e.key === 'o') {
+            window.floatingOrb.executeClickFunction();
+        }
+        if (e.ctrlKey && e.altKey && e.key === 'h') {
+            window.floatingOrb.highlightLinks();
+        }
+    });
+});
+
+setOrbParallel2(() => {
+    // Page monitoring system
+    const observer = new MutationObserver((mutations) => {
+        const significantChanges = mutations.filter(m => 
+            m.type === 'childList' && m.addedNodes.length > 0
+        );
+        if (significantChanges.length > 3) {
+            console.log(`Significant DOM changes detected: ${significantChanges.length}`);
+        }
+    });
+    observer.observe(document.body, { 
+        childList: true, 
+        subtree: true,
+        attributes: false
+    });
+});
+
+setOrbParallel3(() => {
+    // Custom notification system
+    window.orbNotify = (message, type = 'info') => {
+        window.floatingOrb.showNotification(`${type.toUpperCase()}: ${message}`);
+    };
+    
+    // Example usage: window.orbNotify('Custom message', 'success');
+});
+```
+
+### Within Userscript Customization
+
+**The userscript includes a dedicated section for easy customization:**
+
+```javascript
+// ===== CUSTOM USER FUNCTIONS - Add your custom functions here =====
+
+// Click function - executes when orb is clicked
+setOrbClickFunction(() => {
+    console.log("Custom click function executed!");
+    // Add your custom click functionality here
+});
+
+// Serial functions - run in sequence with delays
+setOrbSerial1(() => {
+    console.log("Custom serial 1 - site detection");
+    if (window.location.hostname.includes('youtube.com')) {
+        // YouTube-specific functionality
+    }
+});
+
+setOrbSerial2(() => {
+    console.log("Custom serial 2 - CSS injection");
+    // Inject your custom styles
+});
+
+setOrbSerial3(() => {
+    console.log("Custom serial 3 - data setup");
+    // Set up page data collection
+});
+
+// Parallel functions - run immediately and simultaneously  
+setOrbParallel1(() => {
+    console.log("Custom parallel 1 - hotkeys");
+    // Set up custom keyboard shortcuts
+});
+
+setOrbParallel2(() => {
+    console.log("Custom parallel 2 - monitoring");
+    // Set up page monitoring
+});
+
+setOrbParallel3(() => {
+    console.log("Custom parallel 3 - utilities");
+    // Set up utility functions
+});
+
+// Intervals - background tasks
+setOrbInterval(() => {
+    console.log('Background task running every 30 seconds');
+}, 30000, { name: 'BackgroundTask' });
+```
+
+**Pre-Initialization Queue System:**
+All these functions use a smart queue system - they can be set anywhere in the userscript and will be applied when the orb is ready, regardless of timing.
 ```javascript
 // Auto-refresh pages every 5 minutes
 setOrbInterval(() => {
@@ -260,7 +500,7 @@ setOrbInterval(() => {
 ### Content Manipulation
 ```javascript
 // Set orb to toggle reading mode
-setOrbFunction(() => {
+setOrbClickFunction(() => {
     const articles = document.querySelectorAll('article, .post, .content');
     articles.forEach(article => {
         if (article.style.fontSize === '18px') {
@@ -348,7 +588,19 @@ These functions are **globally accessible** and can be called from:
 
 ```javascript
 // Set orb click function - Available globally
-setOrbFunction(func)
+setOrbClickFunction(func)
+
+// Auto-start function setters - Available globally
+setOrbSerial1(func)
+setOrbSerial2(func)
+setOrbSerial3(func)
+setOrbParallel1(func)
+setOrbParallel2(func)
+setOrbParallel3(func)
+
+// Utility functions for setting multiple functions at once
+setAllOrbSerialFunctions(func1, func2, func3)
+setAllOrbParallelFunctions(func1, func2, func3)
 
 // Interval management - Available globally
 setOrbInterval(func, intervalMs, options)
@@ -369,8 +621,8 @@ These methods are accessible through the `window.floatingOrb` instance and can b
 
 ```javascript
 // Function management
-floatingOrb.setCustomFunction(func)
-floatingOrb.executeCustomFunction()
+floatingOrb.setClickFunction(func)
+floatingOrb.executeClickFunction()
 
 // Interval management  
 floatingOrb.setInterval(func, intervalMs, options)
@@ -395,8 +647,12 @@ floatingOrb.toggleDarkMode()
 **Example Usage from Console:**
 ```javascript
 // Global function calls
-setOrbFunction(() => console.log('Clicked!'));
+setOrbClickFunction(() => console.log('Clicked!'));
 setOrbInterval(() => console.log('Every 3 seconds'), 3000);
+
+// Set auto-start functions
+setOrbSerial1(() => console.log('Custom serial 1'));
+setOrbParallel1(() => console.log('Custom parallel 1'));
 
 // Instance method calls
 window.floatingOrb.showNotification('Hello from console!');
@@ -440,6 +696,16 @@ Namespaced Classes (tm-*)
     └── @keyframes tm-highlight-dance
 ```
 
+## 🤝 Contributing
+
+This userscript is designed to be easily extended and customized. Common extension points:
+
+1. **Add new auto-start functions** in the designated function slots
+2. **Extend the context menu** by adding items to the `menuItems` array
+3. **Create new visual effects** by adding CSS animations
+4. **Add new utility functions** following the existing pattern
+5. **Extend the interval system** with new management features
+
 ## 📄 License
 
 This userscript is provided as-is for educational and personal use. Feel free to modify and distribute according to your needs.
@@ -449,3 +715,7 @@ This userscript is provided as-is for educational and personal use. Feel free to
 - **Mozilla Orbit Orb** - Original inspiration for the concept
 - **TamperMonkey** - The framework that makes browser automation possible
 - **CSS Animations Community** - For the beautiful liquid energy effects inspiration
+
+---
+
+*Transform your browsing experience with a single floating orb that puts the power of webpage manipulation at your fingertips. Every click is a possibility, every website is a canvas.* ✨
